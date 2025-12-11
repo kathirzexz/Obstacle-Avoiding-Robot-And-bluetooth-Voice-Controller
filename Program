@@ -1,0 +1,276 @@
+#include <AFMotor.h>
+#include <Servo.h>
+
+// Pin Definitions
+#define Echo A0
+#define Trig A1
+#define SERVO_PIN 10
+
+// Constants
+#define MOTOR_SPEED 200
+#define TURN_DURATION 3000
+
+// Motors
+AF_DCMotor M1(1);
+AF_DCMotor M2(2);
+AF_DCMotor M3(3);
+AF_DCMotor M4(4);
+
+Servo servo;
+
+// Flags
+bool automaticModeEnabled = false;
+
+void setup() {
+    Serial.begin(9600);
+    pinMode(Echo, INPUT);
+    pinMode(Trig, OUTPUT);
+
+    servo.attach(SERVO_PIN);
+    servo.write(90); // Center
+
+    M1.setSpeed(MOTOR_SPEED);
+    M2.setSpeed(MOTOR_SPEED);
+    M3.setSpeed(MOTOR_SPEED);
+    M4.setSpeed(MOTOR_SPEED);
+
+    Serial.println("Bluetooth communication started...");
+    Serial.println("Waiting for messages...");
+}
+
+// Get distance from ultrasonic
+long getDistance() {
+    digitalWrite(Trig, LOW);
+    delayMicroseconds(2);
+    digitalWrite(Trig, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(Trig, LOW);
+
+    long distance = pulseIn(Echo, HIGH) / 58;
+    return distance;
+}
+
+// Move Functions
+void moveForward() {
+    if (getDistance() < 15) {
+        Serial.println("Obstacle ahead! Cannot move forward.");
+        return;
+    }
+    Serial.println("Moving Forward");
+    M1.run(FORWARD); M2.run(FORWARD);
+    M3.run(FORWARD); M4.run(FORWARD);
+}
+
+void moveBackward() {
+    Serial.println("Moving Backward");
+    M1.run(BACKWARD); M2.run(BACKWARD);
+    M3.run(BACKWARD); M4.run(BACKWARD);
+}
+
+void turnLeft() {
+    Serial.println("Turning Left");
+    M1.run(FORWARD); M3.run(FORWARD);
+    M2.run(BACKWARD); M4.run(BACKWARD);
+}
+
+void turnRight() {
+    Serial.println("Turning Right");
+    M1.run(BACKWARD); M3.run(BACKWARD);
+    M2.run(FORWARD); M4.run(FORWARD);
+}
+
+void stopMotors() {
+    Serial.println("Stopping");
+    M1.run(RELEASE);
+    M2.run(RELEASE);
+    M3.run(RELEASE);
+    M4.run(RELEASE);
+}
+
+// Servo Scan
+long lookAndMeasure(int angle) {
+    servo.write(angle);
+    delay(250);
+    return getDistance();
+}
+
+// Full environment scan
+int preciseScan() {
+    long distances[10];
+    int angles[10];
+    int count = 0;
+
+    Serial.println("Scanning...");
+
+    for (int angle = 0; angle <= 180; angle += 20) {
+        long dist = lookAndMeasure(angle);
+        distances[count] = dist;
+        angles[count] = angle;
+
+        Serial.print("Angle ");
+        Serial.print(angle);
+        Serial.print(" = ");
+        Serial.print(dist);
+        Serial.println(" cm");
+
+        count++;
+    }
+
+    servo.write(90);
+    delay(300);
+
+    long bestDist = 0;
+    int bestAngle = 90;
+
+    // Prefer right first
+    for (int i = 0; i < count; i++) {
+        if (angles[i] > 90 && distances[i] > 15 && distances[i] > bestDist) {
+            bestDist = distances[i];
+            bestAngle = angles[i];
+        }
+    }
+
+    // If no right side safe, check left
+    if (bestDist == 0) {
+        for (int i = 0; i < count; i++) {
+            if (angles[i] < 90 && distances[i] > 15 && distances[i] > bestDist) {
+                bestDist = distances[i];
+                bestAngle = angles[i];
+            }
+        }
+    }
+
+    Serial.print("Best Direction = ");
+    Serial.print(bestAngle);
+    Serial.print(" deg (");
+    Serial.print(bestDist);
+    Serial.println(" cm)");
+
+    return bestAngle;
+}
+
+// Automatic Mode Logic
+void automaticMode() {
+    static bool moving = false;
+    long front = getDistance();
+
+    if (front <= 15) {
+        stopMotors();
+        moving = false;
+        Serial.println("Obstacle! Scanning...");
+
+        int bestAngle = preciseScan();
+
+        // If still blocked, reverse
+        if (lookAndMeasure(90) <= 15) {
+            Serial.println("Still blocked. Reversing...");
+            moveBackward();
+            delay(800);
+            stopMotors();
+            delay(200);
+            bestAngle = preciseScan();
+        }
+
+        if (bestAngle < 90) {
+            turnLeft();
+            int time = map(bestAngle, 0, 90, TURN_DURATION * 1.5, TURN_DURATION * 0.75);
+            delay(time);
+        }
+        else if (bestAngle > 90) {
+            turnRight();
+            int time = map(bestAngle, 90, 180, TURN_DURATION * 0.75, TURN_DURATION * 1.5);
+            delay(time);
+        }
+        else {
+            // No path → rotate fully
+            turnRight();
+            delay(TURN_DURATION * 1.5);
+        }
+
+        stopMotors();
+        delay(200);
+        moveForward();
+        moving = true;
+    }
+    else {
+        if (!moving) {
+            Serial.println("Moving Forward...");
+            moveForward();
+            moving = true;
+        }
+    }
+
+    delay(80);
+}
+
+void loop() {
+    static bool manualForward = false;
+
+    // Safety forward stop
+    if (manualForward) {
+        if (getDistance() < 15) {
+            Serial.println("Obstacle! Stopping...");
+            stopMotors();
+            manualForward = false;
+        }
+    }
+
+    // Auto Mode
+    if (automaticModeEnabled) {
+        automaticMode();
+
+        if (Serial.available()) {
+            String cmd = Serial.readString();
+            cmd.trim();
+
+            if (cmd == "stop") {
+                automaticModeEnabled = false;
+                stopMotors();
+            }
+        }
+        return;
+    }
+
+    // Manual Mode commands
+    if (Serial.available()) {
+        String cmd = Serial.readString();
+        cmd.trim();
+
+        Serial.print("Command: ");
+        Serial.println(cmd);
+
+        if (cmd == "move forward") {
+            moveForward();
+            manualForward = true;
+        }
+        else if (cmd == "move back") {
+            moveBackward();
+            manualForward = false;
+        }
+        else if (cmd == "turn left") {
+            turnLeft();
+            delay(TURN_DURATION);
+            stopMotors();
+            manualForward = false;
+        }
+        else if (cmd == "turn right") {
+            turnRight();
+            delay(TURN_DURATION);
+            stopMotors();
+            manualForward = false;
+        }
+        else if (cmd == "stop") {
+            stopMotors();
+            manualForward = false;
+        }
+        else if (cmd == "automatic mode") {
+            automaticModeEnabled = true;
+            manualForward = false;
+        }
+        else {
+            Serial.println("I don't understand.");
+        }
+    }
+
+    delay(80);
+}
