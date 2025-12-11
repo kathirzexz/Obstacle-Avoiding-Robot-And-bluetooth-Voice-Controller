@@ -1,0 +1,67 @@
+✅ 1. ULTRASONIC SENSOR (HC-SR04)
+
+• VCC → 5V
+• GND → GND
+• TRIG → D9
+• ECHO → D8
+
+
+---
+
+✅ 2. SERVO MOTOR (SG90)
+
+• Signal (Orange) → D10
+• VCC (Red) → 5V
+• GND (Brown/Black) → GND
+
+
+---
+
+✅ 3. HC-05 BLUETOOTH MODULE
+
+• VCC → 5V
+• GND → GND
+• TXD → D0 (Arduino RX)
+• RXD → D1 (Arduino TX)
+
+
+---
+
+✅ 4. DC GEAR MOTORS (4 Motors)
+
+Motor 1
+
+• Motor1 + → M1+
+• Motor1 – → M1−
+
+Motor 2
+
+• Motor2 + → M2+
+• Motor2 – → M2−
+
+Motor 3
+
+• Motor3 + → M3+
+• Motor3 – → M3−
+
+Motor 4
+
+• Motor4 + → M4+
+• Motor4 – → M4−
+
+(If rotation is opposite, swap + and −)
+
+
+---
+
+✅ 5. BATTERY + SWITCH
+
+• Battery + → Switch → VIN (Motor Power +)
+• Battery – → GND
+
+
+---
+
+✅ 6. COMMON GROUND (IMPORTANT)
+
+• All GND (Bluetooth + Servo + Ultrasonic + Battery − + Arduino) → ONE COMMON GROUND
