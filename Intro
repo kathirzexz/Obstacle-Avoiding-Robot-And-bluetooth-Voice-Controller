@@ -1,1 +1,122 @@
+🟦 Obstacle Avoiding Robot with Voice & Bluetooth Control
 
+📌 Introduction
+
+An obstacle-avoiding robot with voice and Bluetooth control is an intelligent mobile robotic system capable of both autonomous navigation and manual user control.
+The robot uses an ultrasonic sensor mounted on a servo motor to scan different angles and detect obstacles accurately. This scanning mechanism improves navigation decisions and prevents collisions.
+
+For manual operation, the robot integrates an HC-05 Bluetooth module, allowing control through a smartphone app. Using a Bluetooth controller or voice-to-text app, the user can send commands such as:
+
+Forward
+
+Backward
+
+Left / Right
+
+Stop
+
+
+The dual-mode design makes the robot versatile, interactive, and ideal for learning concepts related to embedded systems, real-time control, and robotics.
+
+
+---
+
+🟦 Specifications
+
+🔹 Microcontroller
+
+Arduino Uno (ATmega328P)
+
+
+🔹 Motor Driver
+
+L293D Motor Driver Shield
+
+Supports up to 4 DC motors
+
+
+🔹 Drive System
+
+4 × DC geared motors
+
+PWM-based speed control
+
+Movements: forward, backward, left, right
+
+
+🔹 Sensors
+
+Ultrasonic Sensor (HC-SR04)
+
+Range: 2–400 cm
+
+For obstacle detection
+
+
+Servo Motor (SG90)
+
+0°–180° rotation
+
+Used for environmental scanning
+
+
+🔹 Wireless Communication
+
+HC-05 Bluetooth Module
+
+Range: 5–10 meters
+
+Works with voice-to-text apps
+
+Baud rate: 9600
+
+
+🔹 Power Supply
+
+2 × 18650 Li-ion batteries (7.4V)
+
+ON/OFF switch
+
+Common ground for all components
+
+
+🔹 Software
+
+Arduino IDE
+
+Bluetooth controller / voice command app
+
+Custom C++ firmware
+
+
+🔹 Operating Modes
+
+1️⃣ Automatic Mode (Obstacle Avoidance)
+
+Scans surroundings via servo + ultrasonic sensor
+
+Measures distance at multiple angles
+
+Chooses safest direction
+
+Moves autonomously
+
+
+2️⃣ Manual Mode (Bluetooth + Voice)
+
+Receives commands from smartphone
+
+Controls movement direction & speed
+
+Supports voice-to-text commands
+
+
+
+---
+
+🟦 Conclusion
+
+This project successfully demonstrates a multifunctional robotic system capable of both autonomous obstacle avoidance and manual wireless control. The combination of an ultrasonic sensor, servo motor, and Bluetooth communication provides enhanced interactivity and intelligent decision-making.
+
+The robot effectively showcases essential robotics concepts such as sensor fusion, real-time control, motor driving, and wireless communication.
+It is an excellent academic project that forms a strong foundation for future enhancements like IoT control, AI navigation, or camera-based monitoring.
